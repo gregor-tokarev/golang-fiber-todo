@@ -21,12 +21,7 @@ func init() {
 }
 
 func Signup(ctx *fiber.Ctx) error {
-	var reqBody *models.SignupRequest
-	if err := ctx.BodyParser(&reqBody); err != nil {
-		return ctx.Status(400).JSON(fiber.Map{"message": "wrong format"})
-	}
-
-	err := Validator.Struct(reqBody)
+	reqBody, err := utils.ValidateBody[models.SignupRequest](ctx)
 	if err != nil {
 		return ctx.Status(400).JSON(fiber.Map{"message": utils.CheckErrors(err)})
 	}
@@ -62,12 +57,7 @@ func Signup(ctx *fiber.Ctx) error {
 }
 
 func Login(ctx *fiber.Ctx) error {
-	var reqBody *models.LoginRequest
-	if err := ctx.BodyParser(&reqBody); err != nil {
-		return ctx.Status(400).JSON(fiber.Map{"message": "wrong format"})
-	}
-
-	err := Validator.Struct(reqBody)
+	reqBody, err := utils.ValidateBody[models.LoginRequest](ctx)
 	if err != nil {
 		return ctx.Status(400).JSON(fiber.Map{"message": utils.CheckErrors(err)})
 	}
@@ -141,7 +131,7 @@ func Refresh(ctx *fiber.Ctx) error {
 	}
 
 	if user.RefreshToken != body.Token {
-		return ctx.Status(400).JSON(fiber.Map{"message": "Invalid token"})
+		return ctx.Status(401).JSON(fiber.Map{"message": "Invalid token"})
 	}
 
 	t, err := generateTokens(user.Id)
@@ -172,13 +162,7 @@ func updateRefreshToken(userId int, refreshToken string) error {
 }
 
 func parseRefreshToken(ctx *fiber.Ctx) (int, error) {
-	var reqBody *models.RefreshRequest
-
-	if err := ctx.BodyParser(&reqBody); err != nil {
-		return -1, err
-	}
-
-	err := Validator.Struct(reqBody)
+	reqBody, err := utils.ValidateBody[models.RefreshRequest](ctx)
 	if err != nil {
 		return -1, err
 	}
@@ -201,4 +185,19 @@ func parseRefreshToken(ctx *fiber.Ctx) (int, error) {
 
 func jwtKeyFunc(_ *jwt.Token) (interface{}, error) {
 	return []byte(config.Cfg.JwtRefreshSecret), nil
+}
+
+func Logout(ctx *fiber.Ctx) error {
+	userId := ctx.Locals("claims").(map[string]interface{})["sub"].(float64)
+
+	var user *models.User
+	DB.Where("id = ?", userId).First(&user)
+	if user.Email == "" {
+		return ctx.Status(400).JSON(fiber.Map{"message": "User doesn't exist"})
+	}
+
+	user.RefreshToken = ""
+	DB.Save(&user)
+
+	return ctx.Status(200).JSON(fiber.Map{"message": "Logged out"})
 }

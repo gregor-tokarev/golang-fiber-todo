@@ -9,6 +9,7 @@ import (
 	"github.com/gofiber/fiber/v2/middleware/limiter"
 	"github.com/gofiber/fiber/v2/middleware/logger"
 	"github.com/gofiber/fiber/v2/middleware/monitor"
+	recover2 "github.com/gofiber/fiber/v2/middleware/recover"
 	"github.com/joho/godotenv"
 	"goapi/models"
 	"goapi/router"
@@ -31,6 +32,7 @@ func main() {
 		JSONDecoder: json.Unmarshal,
 	})
 
+	app.Use(recover2.New())
 	app.Use(logger.New())
 	app.Use(cors.New(cors.Config{
 		AllowCredentials: true,
