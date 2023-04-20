@@ -40,11 +40,12 @@ func InitDB() *gorm.DB {
 	db, err := gorm.Open(postgres.Open(dns), &gorm.Config{
 		Logger: newLogger,
 	})
+
 	if err != nil {
 		panic(err)
 	}
 
-	log.Fatal(db.AutoMigrate(&User{}, &Task{}))
+	db.AutoMigrate(&User{}, &Task{})
 
 	DB = db
 	return DB

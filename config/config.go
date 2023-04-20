@@ -9,6 +9,7 @@ type Config struct {
 	PostgresPassword string
 	PostgresDB       string
 	JwtAccessSecret  string
+	JwtRefreshSecret string
 }
 
 var Cfg *Config
@@ -26,5 +27,6 @@ func init() {
 		PostgresDB:       env["POSTGRES_DB"],
 		PostgresPort:     env["POSTGRES_PORT"],
 		JwtAccessSecret:  env["JWT_ACCESS_SECRET"],
+		JwtRefreshSecret: env["JWT_REFRESH_SECRET"],
 	}
 }

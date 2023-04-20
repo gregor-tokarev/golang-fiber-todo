@@ -37,7 +37,7 @@ func UpdateTask(ctx *fiber.Ctx) error {
 	err := Validator.Struct(reqBody)
 	if err != nil {
 		return ctx.Status(400).JSON(fiber.Map{
-			"error": utils.CheckErrors(err),
+			"message": utils.CheckErrors(err),
 		})
 	}
 

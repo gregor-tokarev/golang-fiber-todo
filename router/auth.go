@@ -10,6 +10,7 @@ func InitUserRoutes(api fiber.Router) fiber.Router {
 
 	group.Post("/signup", controllers.Signup)
 	group.Post("/login", controllers.Login)
+	group.Post("/refresh", controllers.Refresh)
 
 	return group
 }

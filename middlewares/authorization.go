@@ -1,29 +1,27 @@
 package middlewares
 
 import (
-	"fmt"
 	"github.com/gofiber/fiber/v2"
 	"github.com/golang-jwt/jwt"
 	"goapi/config"
 	"strings"
 )
 
-func Authorization(ctx *fiber.Ctx) error {
-	claims, err := ExtractDataFromToken(ctx)
+func AuthorizationAccess(ctx *fiber.Ctx) error {
+	claims, err := ExtractDataFromAccessToken(ctx)
 	if err != nil {
-		fmt.Println(err)
 		return ctx.Status(403).JSON(fiber.Map{
-			"message": "Authorization failed",
+			"message": "AuthorizationAccess failed",
 		})
 	}
 
-	fmt.Println(claims)
+	ctx.Locals("claims", claims)
 
 	return ctx.Next()
 }
 
-func ExtractDataFromToken(ctx *fiber.Ctx) (map[string]interface{}, error) {
-	tokenString := extractToken(ctx)
+func ExtractDataFromAccessToken(ctx *fiber.Ctx) (map[string]interface{}, error) {
+	tokenString := extractAccessToken(ctx)
 	token, err := jwt.Parse(tokenString, jwtKeyFunc)
 
 	if err != nil {
@@ -38,8 +36,8 @@ func ExtractDataFromToken(ctx *fiber.Ctx) (map[string]interface{}, error) {
 	return claims, nil
 }
 
-func extractToken(c *fiber.Ctx) string {
-	bearToken := c.Get("Authorization")
+func extractAccessToken(ctx *fiber.Ctx) string {
+	bearToken := ctx.Get("Authorization")
 
 	onlyToken := strings.Split(bearToken, " ")
 	if len(onlyToken) == 2 {

@@ -2,17 +2,22 @@ package utils
 
 import (
 	"github.com/go-playground/validator/v10"
+	"github.com/gofiber/fiber/v2"
 )
 
-func CheckErrors(err error) []map[string]string {
-	var errors []map[string]string
+var Validator = validator.New()
 
-	for _, e := range err.(validator.ValidationErrors) {
-		errEl := make(map[string]string, 0)
-		errEl["field"] = e.Field()
-		errEl["message"] = e.Tag()
-		errors = append(errors, errEl)
+func ValidateBody[T interface{}](ctx *fiber.Ctx) (*T, error) {
+	var reqBody *T
+
+	if err := ctx.BodyParser(&reqBody); err != nil {
+		return nil, err
 	}
 
-	return errors
+	err := Validator.Struct(reqBody)
+	if err != nil {
+		return nil, err
+	}
+
+	return reqBody, nil
 }

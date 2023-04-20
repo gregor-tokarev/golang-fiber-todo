@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"errors"
 	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
 	"github.com/golang-jwt/jwt"
@@ -22,12 +23,12 @@ func init() {
 func Signup(ctx *fiber.Ctx) error {
 	var reqBody *models.SignupRequest
 	if err := ctx.BodyParser(&reqBody); err != nil {
-		return ctx.Status(400).JSON(fiber.Map{"error": "wrong format"})
+		return ctx.Status(400).JSON(fiber.Map{"message": "wrong format"})
 	}
 
 	err := Validator.Struct(reqBody)
 	if err != nil {
-		return ctx.Status(400).JSON(fiber.Map{"error": utils.CheckErrors(err)})
+		return ctx.Status(400).JSON(fiber.Map{"message": utils.CheckErrors(err)})
 	}
 
 	var user *models.User
@@ -47,25 +48,28 @@ func Signup(ctx *fiber.Ctx) error {
 
 	DB.Create(&user)
 
-	t, err := generateToken(user.Id)
+	t, err := generateTokens(user.Id)
 	if err != nil {
-		return ctx.Status(500).JSON(fiber.Map{"error": err.Error()})
+		return ctx.Status(500).JSON(fiber.Map{"message": err.Error()})
 	}
 
-	return ctx.Status(201).JSON(&models.SignupResponse{
-		AccessToken: t,
-	})
+	err = updateRefreshToken(user.Id, t.RefreshToken)
+	if err != nil {
+		return ctx.Status(500).JSON(fiber.Map{"message": err.Error()})
+	}
+
+	return ctx.Status(201).JSON(t)
 }
 
 func Login(ctx *fiber.Ctx) error {
 	var reqBody *models.LoginRequest
 	if err := ctx.BodyParser(&reqBody); err != nil {
-		return ctx.Status(400).JSON(fiber.Map{"error": "wrong format"})
+		return ctx.Status(400).JSON(fiber.Map{"message": "wrong format"})
 	}
 
 	err := Validator.Struct(reqBody)
 	if err != nil {
-		return ctx.Status(400).JSON(fiber.Map{"error": utils.CheckErrors(err)})
+		return ctx.Status(400).JSON(fiber.Map{"message": utils.CheckErrors(err)})
 	}
 
 	var user *models.User
@@ -79,25 +83,122 @@ func Login(ctx *fiber.Ctx) error {
 		return ctx.Status(400).JSON(fiber.Map{"message": "Invalid password"})
 	}
 
-	t, err := generateToken(user.Id)
+	t, err := generateTokens(user.Id)
 	if err != nil {
-		return ctx.Status(500).JSON(fiber.Map{"error": err.Error()})
+		return ctx.Status(500).JSON(fiber.Map{"message": err.Error()})
 	}
 
-	return ctx.Status(200).JSON(&models.LoginResponse{
-		AccessToken: t,
-	})
+	err = updateRefreshToken(user.Id, t.RefreshToken)
+	if err != nil {
+		return ctx.Status(500).JSON(fiber.Map{"message": err.Error()})
+	}
+
+	return ctx.Status(200).JSON(t)
 }
 
-func generateToken(userId int) (string, error) {
-	claims := jwt.MapClaims{}
+func generateTokens(userId int) (models.Tokens, error) {
+	accessClaims := jwt.MapClaims{}
+	accessClaims["sub"] = userId
+	accessClaims["exp"] = time.Now().Add(time.Minute * 30).Unix()
 
-	claims["sub"] = userId
-	claims["exp"] = time.Now().Add(time.Minute * 30).Unix()
+	accessToken := jwt.NewWithClaims(jwt.SigningMethodHS256, accessClaims)
 
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	refreshClaims := jwt.MapClaims{}
+	refreshClaims["sub"] = userId
+	refreshClaims["exp"] = time.Now().Add(time.Hour * 24 * 14).Unix()
+	refreshToken := jwt.NewWithClaims(jwt.SigningMethodHS256, refreshClaims)
 
-	tokenString, err := token.SignedString([]byte(config.Cfg.JwtAccessSecret))
+	accessTokenString, accessErr := accessToken.SignedString([]byte(config.Cfg.JwtAccessSecret))
+	refreshTokenString, refreshErr := refreshToken.SignedString([]byte(config.Cfg.JwtRefreshSecret))
+	if accessErr != nil {
+		return models.Tokens{}, accessErr
+	}
+	if refreshErr != nil {
+		return models.Tokens{}, refreshErr
+	}
 
-	return tokenString, err
+	return models.Tokens{
+		AccessToken:  accessTokenString,
+		RefreshToken: refreshTokenString,
+	}, nil
+}
+
+func Refresh(ctx *fiber.Ctx) error {
+	userId, err := parseRefreshToken(ctx)
+	if err != nil {
+		return ctx.Status(400).JSON(fiber.Map{"message": "Invalid token"})
+	}
+
+	var user *models.User
+	DB.Where("id = ?", userId).First(&user)
+	if user.Email == "" {
+		return ctx.Status(400).JSON(fiber.Map{"message": "User doesn't exist"})
+	}
+
+	body, err := utils.ValidateBody[models.RefreshRequest](ctx)
+	if err != nil {
+		return ctx.Status(400).JSON(fiber.Map{"message": "error validating body"})
+	}
+
+	if user.RefreshToken != body.Token {
+		return ctx.Status(400).JSON(fiber.Map{"message": "Invalid token"})
+	}
+
+	t, err := generateTokens(user.Id)
+	if err != nil {
+		return ctx.Status(500).JSON(fiber.Map{"message": err.Error()})
+	}
+
+	err = updateRefreshToken(user.Id, t.RefreshToken)
+	if err != nil {
+		return ctx.Status(500).JSON(fiber.Map{"message": err.Error()})
+	}
+
+	return ctx.Status(200).JSON(t)
+}
+
+func updateRefreshToken(userId int, refreshToken string) error {
+	var user *models.User
+	DB.Where("id = ?", userId).First(&user)
+	if user.Email == "" {
+		return errors.New("User doesn't exist")
+	}
+
+	user.RefreshToken = refreshToken
+
+	DB.Save(&user)
+
+	return nil
+}
+
+func parseRefreshToken(ctx *fiber.Ctx) (int, error) {
+	var reqBody *models.RefreshRequest
+
+	if err := ctx.BodyParser(&reqBody); err != nil {
+		return -1, err
+	}
+
+	err := Validator.Struct(reqBody)
+	if err != nil {
+		return -1, err
+	}
+
+	token, err := jwt.Parse(reqBody.Token, jwtKeyFunc)
+	if err != nil {
+		return -1, err
+	}
+
+	claims, ok := token.Claims.(jwt.MapClaims)
+	if !ok {
+		return -1, err
+	}
+	if claims["sub"] == nil {
+		return -1, err
+	}
+
+	return int(claims["sub"].(float64)), nil
+}
+
+func jwtKeyFunc(token *jwt.Token) (interface{}, error) {
+	return []byte(config.Cfg.JwtRefreshSecret), nil
 }

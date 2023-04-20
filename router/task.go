@@ -9,7 +9,7 @@ import (
 func InitTaskRouter(api fiber.Router) fiber.Router {
 	group := api.Group("/task")
 
-	group.Use(middlewares.Authorization)
+	group.Use(middlewares.AuthorizationAccess)
 
 	// Crate new task
 	group.Post("/", controllers.CreateTask)
