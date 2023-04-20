@@ -45,7 +45,10 @@ func InitDB() *gorm.DB {
 		panic(err)
 	}
 
-	db.AutoMigrate(&User{}, &Task{})
+	err = db.AutoMigrate(&User{}, &Task{})
+	if err != nil {
+		panic(err)
+	}
 
 	DB = db
 	return DB

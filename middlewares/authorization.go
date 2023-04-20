@@ -47,6 +47,6 @@ func extractAccessToken(ctx *fiber.Ctx) string {
 	return ""
 }
 
-func jwtKeyFunc(_token *jwt.Token) (interface{}, error) {
+func jwtKeyFunc(_ *jwt.Token) (interface{}, error) {
 	return []byte(config.Cfg.JwtAccessSecret), nil
 }

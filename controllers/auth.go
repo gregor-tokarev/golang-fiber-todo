@@ -199,6 +199,6 @@ func parseRefreshToken(ctx *fiber.Ctx) (int, error) {
 	return int(claims["sub"].(float64)), nil
 }
 
-func jwtKeyFunc(token *jwt.Token) (interface{}, error) {
+func jwtKeyFunc(_ *jwt.Token) (interface{}, error) {
 	return []byte(config.Cfg.JwtRefreshSecret), nil
 }
