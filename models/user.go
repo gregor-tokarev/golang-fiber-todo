@@ -6,4 +6,5 @@ type User struct {
 	Email        string `json:"email"`
 	Password     string `json:"password"`
 	RefreshToken string `json:"refreshToken"`
+	Tasks        []Task `gorm:"foreignKey:OwnerId"`
 }

@@ -122,7 +122,7 @@ func Refresh(ctx *fiber.Ctx) error {
 	var user *models.User
 	DB.Where("id = ?", userId).First(&user)
 	if user.Email == "" {
-		return ctx.Status(400).JSON(fiber.Map{"message": "User doesn't exist"})
+		return ctx.Status(400).JSON(fiber.Map{"message": "Owner doesn't exist"})
 	}
 
 	body, err := utils.ValidateBody[models.RefreshRequest](ctx)
@@ -151,7 +151,7 @@ func updateRefreshToken(userId int, refreshToken string) error {
 	var user *models.User
 	DB.Where("id = ?", userId).First(&user)
 	if user.Email == "" {
-		return errors.New("User doesn't exist")
+		return errors.New("Owner doesn't exist")
 	}
 
 	user.RefreshToken = refreshToken
@@ -193,7 +193,7 @@ func Logout(ctx *fiber.Ctx) error {
 	var user *models.User
 	DB.Where("id = ?", userId).First(&user)
 	if user.Email == "" {
-		return ctx.Status(400).JSON(fiber.Map{"message": "User doesn't exist"})
+		return ctx.Status(400).JSON(fiber.Map{"message": "Owner doesn't exist"})
 	}
 
 	user.RefreshToken = ""

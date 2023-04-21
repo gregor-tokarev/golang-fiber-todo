@@ -17,6 +17,7 @@ func InitTaskRouter(api fiber.Router) fiber.Router {
 	group.Put("/:task_id", controllers.UpdateTask)
 	// delete task
 	group.Delete("/:task_id", controllers.DeleteTask)
+	group.Get("/", controllers.GetAllTasks)
 
 	return group
 }

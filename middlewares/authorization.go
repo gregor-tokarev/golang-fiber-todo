@@ -16,6 +16,7 @@ func AuthorizationAccess(ctx *fiber.Ctx) error {
 	}
 
 	ctx.Locals("claims", claims)
+	ctx.Locals("userId", claims["sub"])
 
 	return ctx.Next()
 }
