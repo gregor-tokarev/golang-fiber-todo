@@ -9,6 +9,7 @@ type Task struct {
 	Status    string `json:"status"`
 	OwnerId   int    `json:"owner_id"`
 	Order     int    `json:"order"`
+	TagId     int    `json:"tag_id"`
 }
 
 type UpdateTask struct {

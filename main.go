@@ -63,6 +63,7 @@ func main() {
 
 	router.InitUserRoutes(api)
 	router.InitTaskRouter(api)
+	router.InitTagRouter(api)
 
 	log.Fatal(app.Listen(":3000"))
 }
