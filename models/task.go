@@ -8,11 +8,19 @@ type Task struct {
 	Notes     string `json:"notes"`
 	Status    string `json:"status"`
 	OwnerId   int    `json:"owner_id"`
+	Order     int    `json:"order"`
 }
 
 type UpdateTask struct {
 	Text    string `json:"text"`
 	DueDate int64  `json:"due_date"`
-	Status  string `json:"status"`
 	Notes   string `json:"notes"`
+}
+
+type ChangeTaskStatus struct {
+	Status string `json:"status" validate:"required"`
+}
+
+type ChangeTaskOrder struct {
+	Order int `json:"order" validate:"required,number"`
 }
