@@ -29,6 +29,7 @@ func GetAllTasks(ctx *fiber.Ctx) error {
 	userId := ctx.Locals("userId").(float64)
 	skip := ctx.Query("skip")
 	take := ctx.Query("take")
+	tagId := ctx.Query("tag_id")
 
 	if len(skip) == 0 {
 		skip = "0"
@@ -47,7 +48,12 @@ func GetAllTasks(ctx *fiber.Ctx) error {
 	}
 
 	var tasks []models.Task
-	DB.Preload("Owner").Where("owner_id = ?", int(userId)).Offset(skipInt).Limit(takeInt).Find(&tasks)
+	dbReq := DB.Where("owner_id = ?", int(userId)).Offset(skipInt).Limit(takeInt)
+	if tagId != "" {
+		dbReq = dbReq.Where("tag_id = ?", tagId)
+	}
+
+	dbReq.Find(&tasks)
 
 	return ctx.Status(200).JSON(tasks)
 }
