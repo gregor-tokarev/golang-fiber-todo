@@ -1,7 +1,6 @@
 package controllers
 
 import (
-	"fmt"
 	"github.com/gofiber/fiber/v2"
 	"goapi/models"
 	"goapi/utils"
@@ -26,7 +25,6 @@ func GetAllTasks(ctx *fiber.Ctx) error {
 	skip := ctx.Query("skip")
 	take := ctx.Query("take")
 
-	fmt.Println(skip, take)
 	if len(skip) == 0 {
 		skip = "0"
 	}
@@ -60,14 +58,7 @@ func DeleteTask(ctx *fiber.Ctx) error {
 }
 
 func UpdateTask(ctx *fiber.Ctx) error {
-	var reqBody *models.UpdateTask
-	if err := ctx.BodyParser(&reqBody); err != nil {
-		return ctx.Status(400).JSON(fiber.Map{
-			"message": "wrong format",
-		})
-	}
-
-	err := Validator.Struct(reqBody)
+	reqBody, err := utils.ValidateBody[models.UpdateTask](ctx)
 	if err != nil {
 		return ctx.Status(400).JSON(fiber.Map{
 			"message": utils.CheckErrors(err),
@@ -81,6 +72,7 @@ func UpdateTask(ctx *fiber.Ctx) error {
 	task.Text = reqBody.Text
 	task.Status = reqBody.Status
 	task.DueDate = reqBody.DueDate
+	task.Notes = reqBody.Notes
 
 	DB.Save(&task)
 
