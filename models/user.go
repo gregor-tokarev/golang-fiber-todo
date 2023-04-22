@@ -59,3 +59,14 @@ func (u *User) Save() *User {
 	DB.Save(&u)
 	return u
 }
+
+func FindUserByEmail(email string) *User {
+	var user *User
+	DB.Where("email = ?", email).First(&user)
+	return user
+}
+func FindUserById(id int) *User {
+	var user *User
+	DB.Where("id = ?", id).First(&user)
+	return user
+}

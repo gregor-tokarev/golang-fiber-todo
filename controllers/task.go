@@ -8,6 +8,8 @@ import (
 	"strconv"
 )
 
+var DB = models.InitDB()
+
 func CreateTask(ctx *fiber.Ctx) error {
 	userId := ctx.Locals("userId").(float64)
 

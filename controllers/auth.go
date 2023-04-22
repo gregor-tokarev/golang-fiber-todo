@@ -10,16 +10,8 @@ import (
 	"goapi/models/provider"
 	"goapi/utils"
 	"golang.org/x/crypto/bcrypt"
-	"gorm.io/gorm"
 	"time"
 )
-
-var DB *gorm.DB
-var Validator = validator.New()
-
-func init() {
-	DB = models.InitDB()
-}
 
 func Signup(ctx *fiber.Ctx) error {
 	reqBody, err := utils.ValidateBody[models.SignupRequest](ctx)
@@ -27,23 +19,11 @@ func Signup(ctx *fiber.Ctx) error {
 		return ctx.Status(400).JSON(fiber.Map{"message": utils.CheckErrors(err)})
 	}
 
-	var user *models.User
-	DB.Where("email = ?", reqBody.Email).First(&user)
-	if user.Email != "" {
-		return ctx.Status(400).JSON(fiber.Map{"message": "Email already exists"})
-	}
-
-	bytes, err := bcrypt.GenerateFromPassword([]byte(reqBody.Password), bcrypt.DefaultCost)
-	if err != nil {
-		return ctx.Status(500).JSON(err)
-	}
-
-	user.Name = reqBody.Name
-	user.Email = reqBody.Email
-	user.Password = string(bytes)
-
-	DB.Create(&user)
-
+	user := models.NewUser(models.NewUserConfig{
+		Email:    reqBody.Email,
+		Name:     reqBody.Name,
+		Password: reqBody.Password,
+	})
 	t, err := generateTokens(user.Id)
 	if err != nil {
 		return ctx.Status(500).JSON(fiber.Map{"message": err.Error()})
@@ -63,8 +43,7 @@ func Login(ctx *fiber.Ctx) error {
 		return ctx.Status(400).JSON(fiber.Map{"message": utils.CheckErrors(err)})
 	}
 
-	var user *models.User
-	DB.Where("email = ?", reqBody.Email).First(&user)
+	user := models.FindUserByEmail(reqBody.Email)
 	if user.Email == "" {
 		return ctx.Status(400).JSON(fiber.Map{"message": "Email doesn't exist"})
 	}
@@ -120,8 +99,7 @@ func Refresh(ctx *fiber.Ctx) error {
 		return ctx.Status(400).JSON(fiber.Map{"message": "Invalid token"})
 	}
 
-	var user *models.User
-	DB.Where("id = ?", userId).First(&user)
+	user := models.FindUserById(userId)
 	if user.Email == "" {
 		return ctx.Status(400).JSON(fiber.Map{"message": "Owner doesn't exist"})
 	}
@@ -149,15 +127,14 @@ func Refresh(ctx *fiber.Ctx) error {
 }
 
 func updateRefreshToken(userId int, refreshToken string) error {
-	var user *models.User
-	DB.Where("id = ?", userId).First(&user)
+	user := models.FindUserById(userId)
 	if user.Email == "" {
 		return errors.New("Owner doesn't exist")
 	}
 
 	user.RefreshToken = refreshToken
 
-	DB.Save(&user)
+	user.Save()
 
 	return nil
 }
@@ -191,14 +168,13 @@ func jwtKeyFunc(_ *jwt.Token) (interface{}, error) {
 func Logout(ctx *fiber.Ctx) error {
 	userId := ctx.Locals("claims").(map[string]interface{})["sub"].(float64)
 
-	var user *models.User
-	DB.Where("id = ?", userId).First(&user)
+	user := models.FindUserById(int(userId))
 	if user.Email == "" {
 		return ctx.Status(400).JSON(fiber.Map{"message": "Owner doesn't exist"})
 	}
 
 	user.RefreshToken = ""
-	DB.Save(&user)
+	user.Save()
 
 	return ctx.Status(200).JSON(fiber.Map{"message": "Logged out"})
 }
