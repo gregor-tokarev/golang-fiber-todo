@@ -14,7 +14,7 @@ import (
 )
 
 func Signup(ctx *fiber.Ctx) error {
-	reqBody, err := utils.ValidateBody[models.SignupRequest](ctx)
+	reqBody, err := utils.ValidateBody[models.SignupReq](ctx)
 	if err != nil {
 		return ctx.Status(400).JSON(fiber.Map{"message": utils.CheckErrors(err)})
 	}
@@ -38,7 +38,7 @@ func Signup(ctx *fiber.Ctx) error {
 }
 
 func Login(ctx *fiber.Ctx) error {
-	reqBody, err := utils.ValidateBody[models.LoginRequest](ctx)
+	reqBody, err := utils.ValidateBody[models.LoginReq](ctx)
 	if err != nil {
 		return ctx.Status(400).JSON(fiber.Map{"message": utils.CheckErrors(err)})
 	}
@@ -104,7 +104,7 @@ func Refresh(ctx *fiber.Ctx) error {
 		return ctx.Status(400).JSON(fiber.Map{"message": "Owner doesn't exist"})
 	}
 
-	body, err := utils.ValidateBody[models.RefreshRequest](ctx)
+	body, err := utils.ValidateBody[models.RefreshReq](ctx)
 	if err != nil {
 		return ctx.Status(400).JSON(fiber.Map{"message": "error validating body"})
 	}
@@ -140,7 +140,7 @@ func updateRefreshToken(userId int, refreshToken string) error {
 }
 
 func parseRefreshToken(ctx *fiber.Ctx) (int, error) {
-	reqBody, err := utils.ValidateBody[models.RefreshRequest](ctx)
+	reqBody, err := utils.ValidateBody[models.RefreshReq](ctx)
 	if err != nil {
 		return -1, err
 	}

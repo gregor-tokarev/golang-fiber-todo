@@ -8,6 +8,7 @@ type User struct {
 	Password     string `json:"password"`
 	RefreshToken string `json:"refreshToken"`
 	Tasks        []Task `gorm:"foreignKey:OwnerId"`
+	Tags         []Tag  `gorm:"foreignKey:OwnerId"`
 }
 
 type CreateUserOauthConfig struct {

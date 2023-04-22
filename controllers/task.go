@@ -4,25 +4,15 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"goapi/models"
 	"goapi/utils"
-	"gorm.io/gorm"
 	"strconv"
 )
-
-var DB = models.InitDB()
 
 func CreateTask(ctx *fiber.Ctx) error {
 	userId := ctx.Locals("userId").(float64)
 
-	var task = &models.Task{}
-	task.Status = "todo"
-	task.Text = ""
-
-	maxOrder := getMaxTaskOrder(int(userId))
-	task.Order = maxOrder + 1
-
-	task.OwnerId = int(userId)
-
-	DB.Create(&task)
+	task := models.NewTask(models.CreateTaskConfig{
+		OwnerId: int(userId),
+	})
 
 	return ctx.Status(201).JSON(task)
 }
@@ -49,21 +39,26 @@ func GetAllTasks(ctx *fiber.Ctx) error {
 		})
 	}
 
-	var tasks []models.Task
-	dbReq := DB.Where("owner_id = ?", int(userId)).Offset(skipInt).Limit(takeInt)
-	if tagId != "" {
-		dbReq = dbReq.Where("tag_id = ?", tagId)
-	}
-
-	dbReq.Find(&tasks)
+	tasks := models.FindTasks(models.FindTasksConfig{
+		OwnerId: int(userId),
+		Skip:    skipInt,
+		Take:    takeInt,
+		TagId:   tagId,
+	})
 
 	return ctx.Status(200).JSON(tasks)
 }
 
 func DeleteTask(ctx *fiber.Ctx) error {
-	taskId := ctx.Params("task_id")
+	taskId, err := ctx.ParamsInt("task_id")
+	if err != nil {
+		return ctx.Status(400).JSON(fiber.Map{
+			"message": "wrong format",
+		})
+	}
 
-	DB.Delete(&models.Task{}, taskId)
+	task := models.FindTaskById(taskId)
+	task.Delete()
 
 	return ctx.Status(200).JSON(fiber.Map{
 		"message": "success",
@@ -71,84 +66,73 @@ func DeleteTask(ctx *fiber.Ctx) error {
 }
 
 func UpdateTask(ctx *fiber.Ctx) error {
-	reqBody, err := utils.ValidateBody[models.UpdateTask](ctx)
+	reqBody, err := utils.ValidateBody[models.UpdateTaskReq](ctx)
 	if err != nil {
 		return ctx.Status(400).JSON(fiber.Map{
 			"message": utils.CheckErrors(err),
 		})
 	}
 
-	taskId := ctx.Params("task_id")
-	var task *models.Task
-	DB.Where("id = ?", taskId).First(&task)
+	taskId, err := ctx.ParamsInt("task_id")
+	if err != nil {
+		return ctx.Status(400).JSON(fiber.Map{
+			"message": "wrong format",
+		})
+	}
+	task := models.FindTaskById(taskId)
 
 	task.Text = reqBody.Text
 	task.DueDate = reqBody.DueDate
 	task.Notes = reqBody.Notes
 
-	DB.Save(&task)
+	task.Save()
 
 	return ctx.Status(200).JSON(task)
 }
 
-func getMaxTaskOrder(userId int) int {
-	var maxOrder int
-	DB.Raw("SELECT max(tasks.order) FROM tasks WHERE owner_id = ?", userId).Scan(&maxOrder)
-	return maxOrder
-}
-
 func ChangeTaskStatus(ctx *fiber.Ctx) error {
-	reqBody, err := utils.ValidateBody[models.ChangeTaskStatus](ctx)
+	reqBody, err := utils.ValidateBody[models.ChangeTaskStatusReq](ctx)
 	if err != nil {
 		return ctx.Status(400).JSON(fiber.Map{
 			"message": utils.CheckErrors(err),
 		})
 	}
 
-	taskId := ctx.Params("task_id")
-	var task *models.Task
+	taskId, err := ctx.ParamsInt("task_id")
+	if err != nil {
+		return ctx.Status(400).JSON(fiber.Map{
+			"message": "wrong format",
+		})
+	}
+	task := models.FindTaskById(taskId)
 
-	DB.Where("id = ?", taskId).First(&task)
 	task.Status = reqBody.Status
 	if task.Status == "completed" {
 		task.Order = -1
 	}
 
-	DB.Save(&task)
+	task.Save()
 
 	return ctx.Status(200).JSON(task)
 }
 
 func ChangeTaskOrder(ctx *fiber.Ctx) error {
-	reqBody, err := utils.ValidateBody[models.ChangeTaskOrder](ctx)
+	reqBody, err := utils.ValidateBody[models.ChangeTaskOrderReq](ctx)
 	if err != nil {
 		return ctx.Status(400).JSON(fiber.Map{
 			"message": utils.CheckErrors(err),
 		})
 	}
 
-	taskId := ctx.Params("task_id")
-	var task *models.Task
-	DB.Where("id = ?", taskId).First(&task)
-
-	initialOrder := task.Order
-
-	if initialOrder > reqBody.Order {
-		DB.
-			Debug().
-			Model(&models.Task{}).
-			Where("\"owner_id\" = ? AND \"order\" >= ? AND \"order\" <= ?", task.OwnerId, reqBody.Order, initialOrder).
-			Update("\"order\"", gorm.Expr("\"order\" + 1"))
-	} else if initialOrder < reqBody.Order {
-		DB.
-			Debug().
-			Model(&models.Task{}).
-			Where("\"owner_id\" = ? AND \"order\" <= ? AND \"order\" > ?", task.OwnerId, reqBody.Order, initialOrder).
-			Update("\"order\"", gorm.Expr("\"order\" - 1"))
+	taskId, err := ctx.ParamsInt("task_id")
+	if err != nil {
+		return ctx.Status(400).JSON(fiber.Map{
+			"message": "wrong format",
+		})
 	}
+	task := models.FindTaskById(taskId)
 
-	task.Order = reqBody.Order
-	DB.Save(&task)
+	task.ChangeTaskOrder(reqBody.Order)
 
 	return ctx.Status(200).JSON(task)
 }

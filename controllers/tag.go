@@ -4,11 +4,10 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"goapi/models"
 	"goapi/utils"
-	"gorm.io/gorm"
 )
 
 func CreateTag(ctx *fiber.Ctx) error {
-	reqBody, err := utils.ValidateBody[models.CreateTag](ctx)
+	reqBody, err := utils.ValidateBody[models.CreateTagReq](ctx)
 	if err != nil {
 		return ctx.JSON(fiber.Map{
 			"message": utils.CheckErrors(err),
@@ -17,10 +16,10 @@ func CreateTag(ctx *fiber.Ctx) error {
 
 	userId := ctx.Locals("userId").(float64)
 
-	var tag models.Tag
-	tag.Name = reqBody.Name
-	tag.OwnerId = int(userId)
-	DB.Create(&tag)
+	tag := models.NewTag(models.NewTagConfig{
+		Name:    reqBody.Name,
+		OwnerId: int(userId),
+	})
 
 	return ctx.JSON(tag)
 }
@@ -30,12 +29,11 @@ func ConnectTask(ctx *fiber.Ctx) error {
 	taskId, err := ctx.ParamsInt("task_id")
 	if err != nil {
 		return ctx.JSON(fiber.Map{
-			"message": "Invalid id",
+			"message": "Invalid tag or task id",
 		})
 	}
 
-	var task *models.Task
-	DB.Where("id = ?", taskId).First(&task)
+	task := models.FindTaskById(taskId)
 
 	if task.Id == 0 {
 		return ctx.Status(404).JSON(fiber.Map{
@@ -43,8 +41,7 @@ func ConnectTask(ctx *fiber.Ctx) error {
 		})
 	}
 
-	var tag *models.Tag
-	DB.Where("id = ?", tagId).First(&tag)
+	tag := models.FindTagById(tagId)
 	if tag.Id == 0 {
 		return ctx.Status(404).JSON(fiber.Map{
 			"message": "Tag doesn't exist",
@@ -53,7 +50,7 @@ func ConnectTask(ctx *fiber.Ctx) error {
 
 	task.TagId = tagId
 
-	DB.Save(&task)
+	task.Save()
 
 	return ctx.JSON(task)
 }
@@ -61,8 +58,7 @@ func ConnectTask(ctx *fiber.Ctx) error {
 func GetAllTags(ctx *fiber.Ctx) error {
 	userId := ctx.Locals("userId").(float64)
 
-	var tags []models.Tag
-	DB.Where("owner_id = ?", userId).Find(&tags)
+	tags := models.FindAllTags(int(userId))
 
 	return ctx.JSON(tags)
 }
@@ -75,15 +71,14 @@ func ClearTag(ctx *fiber.Ctx) error {
 		})
 	}
 
-	var task models.Task
-	DB.Where("id = ?", taskId).First(&task)
+	task := models.FindTaskById(taskId)
 	if task.Id == 0 {
 		return ctx.JSON(fiber.Map{
 			"message": "Task doesn't exist",
 		})
 	}
 
-	DB.Model(&task).Update("tag_id", gorm.Expr("NULL"))
+	task.ClearTag()
 
 	return ctx.JSON(fiber.Map{
 		"message": "Tag cleared",

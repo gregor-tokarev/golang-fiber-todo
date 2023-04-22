@@ -1,6 +1,6 @@
 package models
 
-type SignupRequest struct {
+type SignupReq struct {
 	Name     string `json:"name" validate:"required"`
 	Email    string `json:"email" validate:"required,email"`
 	Password string `json:"password" validate:"required,min=6"`
@@ -11,11 +11,11 @@ type Tokens struct {
 	RefreshToken string `json:"refresh_token"`
 }
 
-type RefreshRequest struct {
+type RefreshReq struct {
 	Token string `json:"token" validate:"required"`
 }
 
-type LoginRequest struct {
+type LoginReq struct {
 	Email    string `json:"email" validate:"required"`
 	Password string `json:"password" validate:"required"`
 }
