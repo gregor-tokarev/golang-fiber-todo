@@ -180,7 +180,6 @@ func Logout(ctx *fiber.Ctx) error {
 }
 
 var googleProvider = provider.NewGoogleProvider(&provider.GoogleProviderConfig{
-
 	ClientId:     config.Cfg.GoogleOauthClientID,
 	ClientSecret: config.Cfg.GoogleOauthClientSecret,
 	RedirectUri:  config.Cfg.ServerHost + config.Cfg.ServerPrefix + "/auth/google/callback",
