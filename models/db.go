@@ -13,6 +13,10 @@ import (
 
 var DB *gorm.DB
 
+func init() {
+	DB = InitDB()
+}
+
 func InitDB() *gorm.DB {
 	if DB != nil {
 		return DB

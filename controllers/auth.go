@@ -2,11 +2,12 @@ package controllers
 
 import (
 	"errors"
-	"github.com/go-playground/validator/v10"
+	"fmt"
 	"github.com/gofiber/fiber/v2"
 	"github.com/golang-jwt/jwt"
 	"goapi/config"
 	"goapi/models"
+	"goapi/models/provider"
 	"goapi/utils"
 	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
@@ -200,4 +201,56 @@ func Logout(ctx *fiber.Ctx) error {
 	DB.Save(&user)
 
 	return ctx.Status(200).JSON(fiber.Map{"message": "Logged out"})
+}
+
+var googleProvider = provider.NewGoogleProvider(&provider.GoogleProviderConfig{
+
+	ClientId:     config.Cfg.GoogleOauthClientID,
+	ClientSecret: config.Cfg.GoogleOauthClientSecret,
+	RedirectUri:  "http://localhost:3000/api/v1/auth/google/callback",
+	Scope:        "profile+email",
+})
+
+func GoogleOauth(ctx *fiber.Ctx) error {
+	uri, err := googleProvider.GetAuthUrl()
+	fmt.Println(uri)
+	if err != nil {
+		panic(err)
+	}
+
+	return ctx.Redirect(uri)
+}
+
+func GoogleOauthCallback(ctx *fiber.Ctx) error {
+	code := ctx.Query("code")
+
+	tokens, err := googleProvider.GetTokens(code)
+	if err != nil {
+		return ctx.Status(500).JSON(&fiber.Map{
+			"message": err.Error(),
+		})
+	}
+
+	userInfo, err := googleProvider.FetchInfo(tokens.AccessToken)
+	if err != nil {
+		return ctx.Status(500).JSON(&fiber.Map{
+			"message": err.Error(),
+		})
+	}
+
+	fmt.Println(userInfo)
+	user := models.NewUserOauth(models.CreateUserOauthConfig{
+		Name:     userInfo.Name,
+		Email:    userInfo.Email,
+		Provider: "google",
+	})
+
+	authTokens, err := generateTokens(user.Id)
+	if err != nil {
+		return ctx.Status(500).JSON(&fiber.Map{
+			"message": err.Error(),
+		})
+	}
+
+	return ctx.Redirect(config.Cfg.FrontendUrl + fmt.Sprintf("?access_token=%s&refresh_token=%s", authTokens.AccessToken, authTokens.RefreshToken))
 }

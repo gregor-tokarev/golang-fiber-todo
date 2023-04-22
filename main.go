@@ -34,6 +34,9 @@ func main() {
 
 	app.Use(recover2.New())
 	app.Use(logger.New())
+
+	app.Get("/monitor", monitor.New())
+
 	app.Use(cors.New(cors.Config{
 		AllowCredentials: true,
 		AllowOrigins:     "*",
@@ -56,8 +59,6 @@ func main() {
 	app.Use(compress.New(compress.Config{
 		Level: compress.LevelBestSpeed,
 	}))
-
-	app.Get("/monitor", monitor.New())
 
 	api := app.Group("/api/v1")
 

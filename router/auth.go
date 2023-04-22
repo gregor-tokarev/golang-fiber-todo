@@ -14,5 +14,8 @@ func InitUserRoutes(api fiber.Router) fiber.Router {
 	group.Post("/refresh", controllers.Refresh)
 	group.Post("/logout", middlewares.AuthorizationAccess, controllers.Logout)
 
+	group.Get("/:provider/", controllers.GoogleOauth)
+	group.Get("/:provider/callback", controllers.GoogleOauthCallback)
+
 	return group
 }
