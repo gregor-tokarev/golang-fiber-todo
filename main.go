@@ -11,6 +11,7 @@ import (
 	"github.com/gofiber/fiber/v2/middleware/monitor"
 	recover2 "github.com/gofiber/fiber/v2/middleware/recover"
 	"github.com/joho/godotenv"
+	"goapi/config"
 	"goapi/models"
 	"goapi/router"
 	"log"
@@ -60,7 +61,7 @@ func main() {
 		Level: compress.LevelBestSpeed,
 	}))
 
-	api := app.Group("/api/v1")
+	api := app.Group(config.Cfg.ServerPrefix)
 
 	router.InitUserRoutes(api)
 	router.InitTaskRouter(api)
