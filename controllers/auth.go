@@ -227,5 +227,12 @@ func GoogleOauthCallback(ctx *fiber.Ctx) error {
 		})
 	}
 
+	err = updateRefreshToken(user.Id, authTokens.RefreshToken)
+	if err != nil {
+		return ctx.Status(500).JSON(&fiber.Map{
+			"message": err.Error(),
+		})
+	}
+
 	return ctx.Redirect(config.Cfg.FrontendUrl + fmt.Sprintf("?access_token=%s&refresh_token=%s", authTokens.AccessToken, authTokens.RefreshToken))
 }
