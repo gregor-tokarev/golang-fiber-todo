@@ -183,7 +183,7 @@ var googleProvider = provider.NewGoogleProvider(&provider.GoogleProviderConfig{
 
 	ClientId:     config.Cfg.GoogleOauthClientID,
 	ClientSecret: config.Cfg.GoogleOauthClientSecret,
-	RedirectUri:  "http://localhost:3000/api/v1/auth/google/callback",
+	RedirectUri:  config.Cfg.ServerHost + "/api/v1/auth/google/callback",
 	Scope:        "profile+email",
 })
 

@@ -3,6 +3,7 @@ package config
 import "github.com/joho/godotenv"
 
 type Config struct {
+	ServerHost              string
 	PostgresHost            string
 	PostgresPort            string
 	PostgresUser            string
@@ -24,6 +25,7 @@ func init() {
 	}
 
 	Cfg = &Config{
+		ServerHost:              env["SERVER_HOST"],
 		PostgresHost:            env["POSTGRES_HOST"],
 		PostgresUser:            env["POSTGRES_USER"],
 		PostgresPassword:        env["POSTGRES_PASSWORD"],
