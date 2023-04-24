@@ -15,9 +15,9 @@ type Task struct {
 }
 
 type UpdateTaskReq struct {
-	Text    string `json:"text"`
-	DueDate int64  `json:"due_date"`
-	Notes   string `json:"notes"`
+	Text    string `json:"text" validate:"omitempty"`
+	DueDate int64  `json:"due_date" validate:"omitempty,number"`
+	Notes   string `json:"notes" validate:"omitempty"`
 }
 
 type ChangeTaskStatusReq struct {
@@ -36,7 +36,7 @@ func NewTask(config CreateTaskConfig) *Task {
 	var task = &Task{}
 
 	task.Status = "todo"
-	maxOrder := getMaxTaskOrder(config.OwnerId)
+	maxOrder := GetMaxTaskOrder(config.OwnerId)
 	task.Order = maxOrder + 1
 	task.OwnerId = config.OwnerId
 
@@ -76,21 +76,21 @@ func (t *Task) Delete() {
 	DB.Delete(&Task{}, t.Id)
 }
 
-func (t *Task) Save() {
-	DB.Save(&t)
+func (t *Task) Save(fields ...string) {
+	DB.Select(fields).Save(t)
 }
 
-func getMaxTaskOrder(userId int) int {
+func GetMaxTaskOrder(userId int) int {
 	var maxOrder int
 	DB.Raw("SELECT max(tasks.order) FROM tasks WHERE owner_id = ?", userId).Scan(&maxOrder)
 	return maxOrder
 }
 
-func (t *Task) ChangeTaskOrder(order int) {
+func (t *Task) ChangeTaskOrder(order int) *Task {
 	if t.Order > order {
 		DB.
 			Model(&Task{}).
-			Where("\"owner_id\" = ? AND \"order\" >= ? AND \"order\" <= ?", t.OwnerId, order, t.Order).
+			Where("\"owner_id\" = ? AND \"order\" >= ? AND \"order\" < ?", t.OwnerId, order, t.Order).
 			Update("\"order\"", gorm.Expr("\"order\" + 1"))
 	} else if t.Order < order {
 		DB.
@@ -99,10 +99,19 @@ func (t *Task) ChangeTaskOrder(order int) {
 			Update("\"order\"", gorm.Expr("\"order\" - 1"))
 	}
 
-	t.Order = order
-	t.Save()
+	if order < 0 {
+		t.Order = 1
+	} else if maxOrder := GetMaxTaskOrder(t.OwnerId); maxOrder < order {
+		t.Order = maxOrder + 1
+	} else {
+		t.Order = order
+	}
+
+	DB.Select("order").Save(t)
+
+	return t
 }
 
 func (t *Task) ClearTag() {
-	DB.Model(&Task{}).Update("tag_id", gorm.Expr("NULL"))
+	DB.Model(t).Update("tag_id", gorm.Expr("NULL"))
 }

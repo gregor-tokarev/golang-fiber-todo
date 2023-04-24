@@ -39,6 +39,6 @@ func FindAllTags(ownerId int) []Tag {
 	return tags
 }
 
-func (t *Tag) Save() {
-	DB.Save(t)
+func (t *Tag) Save(fields ...string) {
+	DB.Select(fields).Save(t)
 }

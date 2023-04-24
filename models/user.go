@@ -64,8 +64,8 @@ func NewUser(config NewUserConfig) *User {
 	return user
 }
 
-func (u *User) Save() *User {
-	DB.Save(&u)
+func (u *User) Save(fields ...string) *User {
+	DB.Select(fields).Save(u)
 	return u
 }
 

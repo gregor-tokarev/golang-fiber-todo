@@ -134,7 +134,7 @@ func updateRefreshToken(userId int, refreshToken string) error {
 
 	user.RefreshToken = refreshToken
 
-	user.Save()
+	user.Save("refresh_token")
 
 	return nil
 }
@@ -174,7 +174,7 @@ func Logout(ctx *fiber.Ctx) error {
 	}
 
 	user.RefreshToken = ""
-	user.Save()
+	user.Save("refresh_token")
 
 	return ctx.Status(200).JSON(fiber.Map{"message": "Logged out"})
 }

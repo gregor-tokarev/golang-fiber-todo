@@ -50,7 +50,7 @@ func ConnectTask(ctx *fiber.Ctx) error {
 
 	task.TagId = tagId
 
-	task.Save()
+	task.Save("tag_id")
 
 	return ctx.JSON(task)
 }

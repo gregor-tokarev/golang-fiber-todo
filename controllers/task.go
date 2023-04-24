@@ -76,7 +76,7 @@ func UpdateTask(ctx *fiber.Ctx) error {
 	taskId, err := ctx.ParamsInt("task_id")
 	if err != nil {
 		return ctx.Status(400).JSON(fiber.Map{
-			"message": "wrong format",
+			"message": "wrong task_id format",
 		})
 	}
 	task := models.FindTaskById(taskId)
@@ -85,7 +85,7 @@ func UpdateTask(ctx *fiber.Ctx) error {
 	task.DueDate = reqBody.DueDate
 	task.Notes = reqBody.Notes
 
-	task.Save()
+	task.Save("text", "due_date", "notes")
 
 	return ctx.Status(200).JSON(task)
 }
@@ -109,9 +109,11 @@ func ChangeTaskStatus(ctx *fiber.Ctx) error {
 	task.Status = reqBody.Status
 	if task.Status == "completed" {
 		task.Order = -1
+	} else if task.Status == "todo" {
+		task.Order = 1
 	}
 
-	task.Save()
+	task.Save("status", "order")
 
 	return ctx.Status(200).JSON(task)
 }
@@ -132,7 +134,7 @@ func ChangeTaskOrder(ctx *fiber.Ctx) error {
 	}
 	task := models.FindTaskById(taskId)
 
-	task.ChangeTaskOrder(reqBody.Order)
+	task = task.ChangeTaskOrder(reqBody.Order)
 
 	return ctx.Status(200).JSON(task)
 }
