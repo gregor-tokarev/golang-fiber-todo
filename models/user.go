@@ -18,7 +18,7 @@ type CreateUserOauthConfig struct {
 }
 
 func NewUserOauth(config CreateUserOauthConfig) *User {
-	var user *User
+	var user = &User{}
 	DB.Where("email = ?", config.Email).First(&user)
 	if user.Email != "" {
 		return user

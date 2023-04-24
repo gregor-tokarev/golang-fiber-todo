@@ -17,14 +17,14 @@ type NewTagConfig struct {
 }
 
 func NewTag(config NewTagConfig) *Tag {
-	var tag Tag
+	var tag = &Tag{}
 
 	tag.Name = config.Name
 	tag.OwnerId = config.OwnerId
 
 	DB.Create(&tag)
 
-	return &tag
+	return tag
 }
 
 func FindTagById(id int) *Tag {

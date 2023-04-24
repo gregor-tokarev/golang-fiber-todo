@@ -33,18 +33,18 @@ type CreateTaskConfig struct {
 }
 
 func NewTask(config CreateTaskConfig) *Task {
-	var task Task
-	task.Status = "todo"
-	task.Text = ""
+	var task = &Task{}
 
+	task.Status = "todo"
 	maxOrder := getMaxTaskOrder(config.OwnerId)
 	task.Order = maxOrder + 1
-
 	task.OwnerId = config.OwnerId
 
-	DB.Debug().Create(&task)
+	DB.
+		Omit("tag_id", "due_date", "text", "notes").
+		Create(&task)
 
-	return &task
+	return task
 }
 
 func FindTaskById(id int) *Task {
