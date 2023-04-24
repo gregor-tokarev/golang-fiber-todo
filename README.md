@@ -3,16 +3,6 @@
 
 This is api for todo app written in golang & fiber & gorm. I create it for educational perpuses, to learn golang a litle bit.
 
-
-
-## Installation
-
-
-```sh
-    go mod tidy
-    go mod vendor
-```
-    
 ## API Reference
 
 [![Run in Postman](https://run.pstmn.io/button.svg)](https://app.getpostman.com/run-collection/11446645-2697eb37-2718-4937-bf81-8999517ed170?action=collection%2Ffork&collection-url=entityId%3D11446645-2697eb37-2718-4937-bf81-8999517ed170%26entityType%3Dcollection%26workspaceId%3De4868777-80e9-40b2-8f55-c370d83d4c78)
