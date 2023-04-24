@@ -1,5 +1,7 @@
 package models
 
+import "golang.org/x/crypto/bcrypt"
+
 type User struct {
 	Id           int    `json:"id" gorm:"primaryKey"`
 	Name         string `json:"name"`
@@ -48,7 +50,13 @@ func NewUser(config NewUserConfig) *User {
 
 	user.Name = config.Name
 	user.Email = config.Email
-	user.Password = config.Password
+
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(config.Password), bcrypt.DefaultCost)
+	if err != nil {
+		panic(err)
+	}
+	user.Password = string(hashedPassword)
+
 	user.Provider = "local"
 
 	DB.Create(&user)
