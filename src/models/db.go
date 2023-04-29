@@ -2,7 +2,7 @@ package models
 
 import (
 	"fmt"
-	"goapi/config"
+	"goapi/src/config"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"

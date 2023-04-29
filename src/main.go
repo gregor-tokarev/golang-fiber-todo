@@ -11,9 +11,9 @@ import (
 	"github.com/gofiber/fiber/v2/middleware/monitor"
 	recover2 "github.com/gofiber/fiber/v2/middleware/recover"
 	"github.com/joho/godotenv"
-	"goapi/config"
-	"goapi/models"
-	"goapi/router"
+	"goapi/src/config"
+	"goapi/src/models"
+	router2 "goapi/src/router"
 	"log"
 	"time"
 )
@@ -63,9 +63,9 @@ func main() {
 
 	api := app.Group(config.Cfg.ServerPrefix)
 
-	router.InitUserRoutes(api)
-	router.InitTaskRouter(api)
-	router.InitTagRouter(api)
+	router2.InitUserRoutes(api)
+	router2.InitTaskRouter(api)
+	router2.InitTagRouter(api)
 
 	log.Fatal(app.Listen(":3000"))
 }

@@ -2,8 +2,8 @@ package controllers
 
 import (
 	"github.com/gofiber/fiber/v2"
-	"goapi/models"
-	"goapi/utils"
+	"goapi/src/models"
+	utils2 "goapi/src/utils"
 	"strconv"
 )
 
@@ -66,10 +66,10 @@ func DeleteTask(ctx *fiber.Ctx) error {
 }
 
 func UpdateTask(ctx *fiber.Ctx) error {
-	reqBody, err := utils.ValidateBody[models.UpdateTaskReq](ctx)
+	reqBody, err := utils2.ValidateBody[models.UpdateTaskReq](ctx)
 	if err != nil {
 		return ctx.Status(400).JSON(fiber.Map{
-			"message": utils.CheckErrors(err),
+			"message": utils2.CheckErrors(err),
 		})
 	}
 
@@ -91,10 +91,10 @@ func UpdateTask(ctx *fiber.Ctx) error {
 }
 
 func ChangeTaskStatus(ctx *fiber.Ctx) error {
-	reqBody, err := utils.ValidateBody[models.ChangeTaskStatusReq](ctx)
+	reqBody, err := utils2.ValidateBody[models.ChangeTaskStatusReq](ctx)
 	if err != nil {
 		return ctx.Status(400).JSON(fiber.Map{
-			"message": utils.CheckErrors(err),
+			"message": utils2.CheckErrors(err),
 		})
 	}
 
@@ -119,10 +119,10 @@ func ChangeTaskStatus(ctx *fiber.Ctx) error {
 }
 
 func ChangeTaskOrder(ctx *fiber.Ctx) error {
-	reqBody, err := utils.ValidateBody[models.ChangeTaskOrderReq](ctx)
+	reqBody, err := utils2.ValidateBody[models.ChangeTaskOrderReq](ctx)
 	if err != nil {
 		return ctx.Status(400).JSON(fiber.Map{
-			"message": utils.CheckErrors(err),
+			"message": utils2.CheckErrors(err),
 		})
 	}
 

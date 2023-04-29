@@ -3,7 +3,7 @@ package middlewares
 import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/golang-jwt/jwt"
-	"goapi/config"
+	"goapi/src/config"
 	"strings"
 )
 

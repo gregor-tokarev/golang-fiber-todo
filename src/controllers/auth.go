@@ -5,21 +5,21 @@ import (
 	"fmt"
 	"github.com/gofiber/fiber/v2"
 	"github.com/golang-jwt/jwt"
-	"goapi/config"
-	"goapi/models"
-	"goapi/models/provider"
-	"goapi/utils"
+	"goapi/src/config"
+	models2 "goapi/src/models"
+	"goapi/src/models/provider"
+	utils2 "goapi/src/utils"
 	"golang.org/x/crypto/bcrypt"
 	"time"
 )
 
 func Signup(ctx *fiber.Ctx) error {
-	reqBody, err := utils.ValidateBody[models.SignupReq](ctx)
+	reqBody, err := utils2.ValidateBody[models2.SignupReq](ctx)
 	if err != nil {
-		return ctx.Status(400).JSON(fiber.Map{"message": utils.CheckErrors(err)})
+		return ctx.Status(400).JSON(fiber.Map{"message": utils2.CheckErrors(err)})
 	}
 
-	user := models.NewUser(models.NewUserConfig{
+	user := models2.NewUser(models2.NewUserConfig{
 		Email:    reqBody.Email,
 		Name:     reqBody.Name,
 		Password: reqBody.Password,
@@ -38,12 +38,12 @@ func Signup(ctx *fiber.Ctx) error {
 }
 
 func Login(ctx *fiber.Ctx) error {
-	reqBody, err := utils.ValidateBody[models.LoginReq](ctx)
+	reqBody, err := utils2.ValidateBody[models2.LoginReq](ctx)
 	if err != nil {
-		return ctx.Status(400).JSON(fiber.Map{"message": utils.CheckErrors(err)})
+		return ctx.Status(400).JSON(fiber.Map{"message": utils2.CheckErrors(err)})
 	}
 
-	user := models.FindUserByEmail(reqBody.Email)
+	user := models2.FindUserByEmail(reqBody.Email)
 	if user.Email == "" {
 		return ctx.Status(400).JSON(fiber.Map{"message": "Email doesn't exist"})
 	}
@@ -66,7 +66,7 @@ func Login(ctx *fiber.Ctx) error {
 	return ctx.Status(200).JSON(t)
 }
 
-func generateTokens(userId int) (models.Tokens, error) {
+func generateTokens(userId int) (models2.Tokens, error) {
 	accessClaims := jwt.MapClaims{}
 	accessClaims["sub"] = userId
 	accessClaims["exp"] = time.Now().Add(time.Minute * 30).Unix()
@@ -81,13 +81,13 @@ func generateTokens(userId int) (models.Tokens, error) {
 	accessTokenString, accessErr := accessToken.SignedString([]byte(config.Cfg.JwtAccessSecret))
 	refreshTokenString, refreshErr := refreshToken.SignedString([]byte(config.Cfg.JwtRefreshSecret))
 	if accessErr != nil {
-		return models.Tokens{}, accessErr
+		return models2.Tokens{}, accessErr
 	}
 	if refreshErr != nil {
-		return models.Tokens{}, refreshErr
+		return models2.Tokens{}, refreshErr
 	}
 
-	return models.Tokens{
+	return models2.Tokens{
 		AccessToken:  accessTokenString,
 		RefreshToken: refreshTokenString,
 	}, nil
@@ -99,12 +99,12 @@ func Refresh(ctx *fiber.Ctx) error {
 		return ctx.Status(400).JSON(fiber.Map{"message": "Invalid token"})
 	}
 
-	user := models.FindUserById(userId)
+	user := models2.FindUserById(userId)
 	if user.Email == "" {
 		return ctx.Status(400).JSON(fiber.Map{"message": "Owner doesn't exist"})
 	}
 
-	body, err := utils.ValidateBody[models.RefreshReq](ctx)
+	body, err := utils2.ValidateBody[models2.RefreshReq](ctx)
 	if err != nil {
 		return ctx.Status(400).JSON(fiber.Map{"message": "error validating body"})
 	}
@@ -127,7 +127,7 @@ func Refresh(ctx *fiber.Ctx) error {
 }
 
 func updateRefreshToken(userId int, refreshToken string) error {
-	user := models.FindUserById(userId)
+	user := models2.FindUserById(userId)
 	if user.Email == "" {
 		return errors.New("Owner doesn't exist")
 	}
@@ -140,7 +140,7 @@ func updateRefreshToken(userId int, refreshToken string) error {
 }
 
 func parseRefreshToken(ctx *fiber.Ctx) (int, error) {
-	reqBody, err := utils.ValidateBody[models.RefreshReq](ctx)
+	reqBody, err := utils2.ValidateBody[models2.RefreshReq](ctx)
 	if err != nil {
 		return -1, err
 	}
@@ -168,7 +168,7 @@ func jwtKeyFunc(_ *jwt.Token) (interface{}, error) {
 func Logout(ctx *fiber.Ctx) error {
 	userId := ctx.Locals("claims").(map[string]interface{})["sub"].(float64)
 
-	user := models.FindUserById(int(userId))
+	user := models2.FindUserById(int(userId))
 	if user.Email == "" {
 		return ctx.Status(400).JSON(fiber.Map{"message": "Owner doesn't exist"})
 	}
@@ -188,7 +188,6 @@ var googleProvider = provider.NewGoogleProvider(&provider.GoogleProviderConfig{
 
 func GoogleOauth(ctx *fiber.Ctx) error {
 	uri, err := googleProvider.GetAuthUrl()
-	fmt.Println(uri)
 	if err != nil {
 		panic(err)
 	}
@@ -213,8 +212,7 @@ func GoogleOauthCallback(ctx *fiber.Ctx) error {
 		})
 	}
 
-	fmt.Println(userInfo)
-	user := models.NewUserOauth(models.CreateUserOauthConfig{
+	user := models2.NewUserOauth(models2.CreateUserOauthConfig{
 		Name:     userInfo.Name,
 		Email:    userInfo.Email,
 		Provider: "google",

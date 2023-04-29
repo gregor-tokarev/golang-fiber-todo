@@ -102,7 +102,6 @@ func (g GoogleProvider) FetchInfo(accessToken string) (*ProviderUser, error) {
 		return nil, err
 	}
 	defer res.Body.Close()
-	fmt.Println(string(body))
 
 	var mapRes *ProviderUser
 	err = json.Unmarshal(body, &mapRes)

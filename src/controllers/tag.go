@@ -2,21 +2,21 @@ package controllers
 
 import (
 	"github.com/gofiber/fiber/v2"
-	"goapi/models"
-	"goapi/utils"
+	models2 "goapi/src/models"
+	utils2 "goapi/src/utils"
 )
 
 func CreateTag(ctx *fiber.Ctx) error {
-	reqBody, err := utils.ValidateBody[models.CreateTagReq](ctx)
+	reqBody, err := utils2.ValidateBody[models2.CreateTagReq](ctx)
 	if err != nil {
 		return ctx.JSON(fiber.Map{
-			"message": utils.CheckErrors(err),
+			"message": utils2.CheckErrors(err),
 		})
 	}
 
 	userId := ctx.Locals("userId").(float64)
 
-	tag := models.NewTag(models.NewTagConfig{
+	tag := models2.NewTag(models2.NewTagConfig{
 		Name:    reqBody.Name,
 		OwnerId: int(userId),
 	})
@@ -33,7 +33,7 @@ func ConnectTask(ctx *fiber.Ctx) error {
 		})
 	}
 
-	task := models.FindTaskById(taskId)
+	task := models2.FindTaskById(taskId)
 
 	if task.Id == 0 {
 		return ctx.Status(404).JSON(fiber.Map{
@@ -41,7 +41,7 @@ func ConnectTask(ctx *fiber.Ctx) error {
 		})
 	}
 
-	tag := models.FindTagById(tagId)
+	tag := models2.FindTagById(tagId)
 	if tag.Id == 0 {
 		return ctx.Status(404).JSON(fiber.Map{
 			"message": "Tag doesn't exist",
@@ -58,7 +58,7 @@ func ConnectTask(ctx *fiber.Ctx) error {
 func GetAllTags(ctx *fiber.Ctx) error {
 	userId := ctx.Locals("userId").(float64)
 
-	tags := models.FindAllTags(int(userId))
+	tags := models2.FindAllTags(int(userId))
 
 	return ctx.JSON(tags)
 }
@@ -71,7 +71,7 @@ func ClearTag(ctx *fiber.Ctx) error {
 		})
 	}
 
-	task := models.FindTaskById(taskId)
+	task := models2.FindTaskById(taskId)
 	if task.Id == 0 {
 		return ctx.JSON(fiber.Map{
 			"message": "Task doesn't exist",

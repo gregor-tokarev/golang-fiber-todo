@@ -2,8 +2,8 @@ package router
 
 import (
 	"github.com/gofiber/fiber/v2"
-	"goapi/controllers"
-	"goapi/middlewares"
+	"goapi/src/controllers"
+	"goapi/src/middlewares"
 )
 
 func InitTaskRouter(api fiber.Router) fiber.Router {
